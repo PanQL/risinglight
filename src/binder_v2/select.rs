@@ -1,7 +1,7 @@
 // Copyright 2022 RisingLight Project Authors. Licensed under Apache-2.0.
 
 use super::*;
-use crate::parser::{Expr, Query, SelectItem, SetExpr};
+use crate::parser::{Expr, Query, SelectItem, SetExpr, Value};
 
 impl Binder {
     pub(super) fn bind_query(&mut self, query: Query) -> Result {
@@ -41,6 +41,12 @@ impl Binder {
     }
 
     pub fn bind_select(&mut self, select: Select) -> Result {
+        let is_distinct = if select.distinct {
+            self.bind_expr(Expr::Value(Value::Boolean(true)))?
+        } else {
+            self.bind_expr(Expr::Value(Value::Boolean(false)))?
+        };
+
         let from = self.bind_from(select.from)?;
 
         let where_ = self.bind_condition(select.selection)?;
@@ -54,9 +60,14 @@ impl Binder {
 
         let having = self.bind_condition(select.having)?;
 
-        Ok(self
-            .egraph
-            .add(Node::Select([projection, from, where_, groupby, having])))
+        Ok(self.egraph.add(Node::Select([
+            projection,
+            is_distinct,
+            from,
+            where_,
+            groupby,
+            having,
+        ])))
     }
 
     fn bind_projection(&mut self, projection: Vec<SelectItem>, from: Id) -> Result {

@@ -4,7 +4,7 @@ use super::*;
 #[rustfmt::skip]
 pub fn rules() -> Vec<Rewrite> { vec![
     rw!("extract-agg-from-select-list";
-        "(select ?exprs ?from ?where ?groupby ?having)" =>
+        "(select ?exprs false ?from ?where ?groupby ?having)" =>
         { ExtractAgg {
             has_agg: pattern("
             (proj ?exprs
@@ -16,7 +16,35 @@ pub fn rules() -> Vec<Rewrite> { vec![
                     )
                 )
             )"),
-            no_agg: pattern("(proj ?exprs (filter ?where ?from))"),
+            no_agg: pattern("
+            (proj ?exprs
+                (distinct ?groupby
+                    (filter ?where ?from)
+                )
+            )"),
+            src: var("?exprs"),
+            output: var("?aggs"),
+        }}
+    ),
+    rw!("extract-distinct-agg-from-select-list";
+        "(select ?exprs true ?from ?where ?groupby ?having)" =>
+        { ExtractAgg {
+            has_agg: pattern("
+            (distinct ?exprs
+                (filter ?having
+                    (agg ?aggs ?groupby
+                        (filter ?where
+                            ?from
+                        )
+                    )
+                )
+            )"),
+            no_agg: pattern("
+            (distinct ?exprs
+                (distinct ?groupby
+                    (filter ?where ?from)
+                )
+            )"),
             src: var("?exprs"),
             output: var("?aggs"),
         }}
@@ -99,6 +127,7 @@ mod tests {
         "
         (select
             (list (+ (+ (sum (+ $1.1 $1.2)) (count $1.1)) $1.1))
+            false
             (scan (list $1.1 $1.2 $1.3))
             (> $1.2 1)
             (list $1.1)
@@ -122,6 +151,7 @@ mod tests {
         "
         (select
             (list $1.1)
+            false
             (scan (list $1.1 $1.2 $1.3))
             true (list) true
         )" => "
@@ -139,6 +169,7 @@ mod tests {
         "
         (select
             (list $1.2 $2.2)
+            false
             (join inner true
                 (scan (list $1.1 $1.2))
                 (scan (list $2.1 $2.2 $2.3))

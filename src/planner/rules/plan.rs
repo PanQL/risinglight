@@ -22,6 +22,7 @@ fn cancel_rules() -> Vec<Rewrite> { vec![
     rw!("filter-false"; "(filter false ?child)" => "(values)"),
     rw!("join-false";   "(join ?type false ?left ?right)" => "(values)"),
     rw!("order-null";   "(order (list) ?child)" => "?child"),
+    rw!("delete-empty-distinct"; "(distinct (list) ?a)" => "(?a)"),
 ]}
 
 #[rustfmt::skip]

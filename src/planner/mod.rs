@@ -70,8 +70,9 @@ define_language! {
         "as" = Alias([Id; 2]),                  // (as name expr)
         "fn" = Function(Box<[Id]>),             // (fn name args..)
 
-        "select" = Select([Id; 5]),             // (select
+        "select" = Select([Id; 6]),             // (select
                                                 //      select_list=[expr..]
+                                                //      is_distinct
                                                 //      from=join
                                                 //      where=expr
                                                 //      groupby=[expr..]
@@ -82,6 +83,7 @@ define_language! {
         "scan" = Scan(Id),                      // (scan [column..])
         "values" = Values(Box<[Id]>),           // (values [expr..]..)
         "proj" = Proj([Id; 2]),                 // (proj [expr..] child)
+        "distinct" = Disctinct([Id; 2]),        // (distinct [expr..] child)
         "filter" = Filter([Id; 2]),             // (filter expr child)
         "order" = Order([Id; 2]),               // (order [order_key..] child)
             "asc" = Asc(Id),                        // (asc key)
